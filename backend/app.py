@@ -2,13 +2,17 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import hashlib, os, json
 from rsa_utils import generate_keys, sign_file, verify_file
-
+import os
 app = Flask(__name__)
 CORS(app)  # <-- allow frontend fetch
 UPLOAD_FOLDER = "uploads"
 SIGNATURE_FOLDER = "signatures"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(SIGNATURE_FOLDER, exist_ok=True)
+
+@app.route("/")
+def home():
+    return jsonify({"message": "Digital Signature Backend is running!"})
 
 @app.route("/generate_keys", methods=["GET"])
 def generate_keys_route():
@@ -51,3 +55,4 @@ def verify_file_route():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=port)
