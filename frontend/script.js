@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://digital-signature-backend.onrender.com";
+const BACKEND_URL = "https://digital-signature-backend-zrld.onrender.com";
 
 // Generate Keys
 document.getElementById("generateKeysBtn").addEventListener("click", async () => {
