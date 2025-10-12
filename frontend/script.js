@@ -1,4 +1,4 @@
-const BACKEND_URL = "http://127.0.0.1:5000";
+const BACKEND_URL = "https://digital-signature-backend.onrender.com";
 
 // Generate Keys
 document.getElementById("generateKeysBtn").addEventListener("click", async () => {
