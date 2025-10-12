@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Signature System</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>🔐 Digital Signature System</h1>
+
+    <div class="section">
+      <h2>Generate Keys</h2>
+      <button id="generateKeysBtn">Generate Keys</button>
+      <p id="keysOutput"></p>
+    </div>
+
+    <div class="section">
+      <h2>Sign a File</h2>
+      <input type="file" id="signFileInput" />
+      <button id="signBtn">Sign File</button>
+      <p id="signOutput"></p>
+    </div>
+
+    <div class="section">
+      <h2>Verify a File</h2>
+      <label>Select Original File:</label>
+      <input type="file" id="verifyFileInput" />
+      <label>Select Signature File:</label>
+      <input type="file" id="verifySigInput" />
+      <button id="verifyBtn">Verify File</button>
+      <p id="verifyOutput"></p>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
