@@ -1,75 +1,86 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os, json, datetime
 from rsa_utils import generate_keys, sign_file, verify_file
+from zoneinfo import ZoneInfo  # for IST timezone (Python 3.9+)
 
 app = Flask(__name__)
 CORS(app)
 
-UPLOAD_FOLDER = "uploads"
-SIGNED_FOLDER = "signed_files"
+# ===== Folder Setup =====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+UPLOAD_FOLDER = os.path.join(BASE_DIR, "uploads")
+SIGNED_FOLDER = os.path.join(BASE_DIR, "signed_files")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(SIGNED_FOLDER, exist_ok=True)
 
-# Home route
+# ===== Home Route =====
 @app.route("/")
 def home():
     return jsonify({"message": "Digital Signature Backend (Advanced) is running!"})
 
 
-# 🧩 Generate Keys
+# ===== Generate RSA Keys =====
 @app.route("/generate_keys", methods=["GET"])
 def generate_keys_route():
     public_key, private_key = generate_keys()
-    with open("keys.json", "w") as f:
+    with open(os.path.join(BASE_DIR, "keys.json"), "w") as f:
         json.dump({"public_key": public_key, "private_key": private_key}, f)
     return jsonify({"public_key": public_key, "private_key": private_key})
 
 
-# ✍️ Sign File (with username + timestamp embedded)
+# ===== Sign File =====
 @app.route("/sign_file", methods=["POST"])
 def sign_file_route():
     if "file" not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
     file = request.files["file"]
-    user = request.form.get("user", "Anonymous")  # user name from frontend
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(file_path)
+    user = request.form.get("user", "Anonymous")
+
+    upload_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    signed_path = os.path.join(SIGNED_FOLDER, file.filename)
+    file.save(upload_path)
 
     # Load private key
-    with open("keys.json", "r") as f:
+    with open(os.path.join(BASE_DIR, "keys.json"), "r") as f:
         keys = json.load(f)
     private_key = keys["private_key"]
 
-    # Sign file -> returns signature + hash
-    signature, file_hash = sign_file(file_path, private_key)
+    # Create signature and file hash
+    signature, file_hash = sign_file(upload_path, private_key)
 
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # ✅ Generate correct IST timestamp
+    ist = ZoneInfo("Asia/Kolkata")
+    timestamp = datetime.datetime.now(ist).strftime("%d-%b-%Y %I:%M:%S %p %Z")
 
-    # Create metadata block to embed
+    # Create signature metadata block
     signature_block = (
-        "\n\n---DIGITAL SIGNATURE DATA---\n"
+        f"\n\n---DIGITAL SIGNATURE DATA---\n"
         f"User: {user}\n"
         f"Timestamp: {timestamp}\n"
         f"File Hash: {file_hash}\n"
         f"Signature: {signature}\n"
         f"Public Key: {keys['public_key']}\n"
-        "---END SIGNATURE DATA---\n"
-    )
+        f"---END SIGNATURE DATA---\n"
+    ).encode("utf-8")
 
-    # Embed the signature block at end of file
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
-        content = f.read()
-    signed_content = content + signature_block
+    # Write signed file (binary safe)
+    with open(upload_path, "rb") as f:
+        original_data = f.read()
+    with open(signed_path, "wb") as f:
+        f.write(original_data)
+        f.write(signature_block)
 
-    signed_path = os.path.join(SIGNED_FOLDER, file.filename)
-    with open(signed_path, "w", encoding="utf-8") as f:
-        f.write(signed_content)
+    print(f"✅ Signed file saved at: {signed_path}")
+
+    # Create download link
+    download_url = f"/download_signed/{file.filename}"
 
     return jsonify({
         "message": "File signed successfully!",
         "signed_file": file.filename,
+        "download_url": download_url,
         "user": user,
         "timestamp": timestamp,
         "signature": signature,
@@ -77,20 +88,26 @@ def sign_file_route():
     })
 
 
-# ✅ Verify File (read embedded signature info)
+# ===== Download Signed File =====
+@app.route("/download_signed/<filename>")
+def download_signed(filename):
+    return send_from_directory(SIGNED_FOLDER, filename, as_attachment=True)
+
+
+# ===== Verify File =====
 @app.route("/verify_file", methods=["POST"])
 def verify_file_route():
     if "file" not in request.files:
         return jsonify({"error": "File is required"}), 400
 
     file = request.files["file"]
-    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-    file.save(file_path)
+    upload_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(upload_path)
 
-    with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
+    # Read file as text to find signature metadata
+    with open(upload_path, "r", encoding="utf-8", errors="ignore") as f:
         content = f.read()
 
-    # Extract embedded signature block
     if "---DIGITAL SIGNATURE DATA---" not in content:
         return jsonify({"verified": False, "message": "❌ No embedded signature found."})
 
@@ -113,13 +130,13 @@ def verify_file_route():
     except Exception as e:
         return jsonify({"verified": False, "message": f"Metadata error: {str(e)}"})
 
-    # Write only original content temporarily for verification
-    temp_original_path = os.path.join(UPLOAD_FOLDER, f"temp_{file.filename}")
-    with open(temp_original_path, "w", encoding="utf-8") as f:
+    # Verify authenticity
+    temp_path = os.path.join(UPLOAD_FOLDER, f"temp_{file.filename}")
+    with open(temp_path, "w", encoding="utf-8") as f:
         f.write(original_content)
 
-    valid = verify_file(temp_original_path, signature, public_key)
-    os.remove(temp_original_path)
+    valid = verify_file(temp_path, signature, public_key)
+    os.remove(temp_path)
 
     return jsonify({
         "verified": valid,
@@ -130,6 +147,7 @@ def verify_file_route():
     })
 
 
+# ===== Run Flask App =====
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
