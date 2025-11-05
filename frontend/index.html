@@ -13,6 +13,7 @@
       <h2>🔐 Menu</h2>
       <button class="nav-btn" id="nav-sign">✍️ Sign File</button>
       <button class="nav-btn" id="nav-verify">🧾 Verify File</button>
+      <button class="nav-btn" id="nav-visual">🎥 Visualization</button>
     </aside>
 
     <!-- ===== Main Content ===== -->
@@ -57,9 +58,17 @@
         <div id="verifyOutput" class="output"></div>
       </div>
 
+      <!-- 🎥 Visualization Section -->
+      <div class="section hidden" id="visual-section">
+        <h2>🎥 Working Visualization</h2>
+        <p>Click “Start Visualization” to see how the digital signature process works internally.</p>
+        <button id="startVisualizationBtn">▶️ Start Visualization</button>
+        <div id="visualSteps" class="visual-box"></div>
+      </div>
+
       <!-- Footer -->
       <footer>
-        <p>Created by <b>Your Name</b> | Maths Project on Cryptography & Digital Signatures</p>
+        <p>Created by <b>Venugopal K P</b> | Maths Project on Cryptography & Digital Signatures</p>
         <small>RSA • Modular Arithmetic • SHA-256 • Flask • Vercel</small>
       </footer>
     </main>
@@ -71,15 +80,45 @@
     // ===== Section Toggle Logic =====
     const signSection = document.getElementById("sign-section");
     const verifySection = document.getElementById("verify-section");
+    const visualSection = document.getElementById("visual-section");
 
     document.getElementById("nav-sign").addEventListener("click", () => {
       signSection.classList.remove("hidden");
       verifySection.classList.add("hidden");
+      visualSection.classList.add("hidden");
     });
 
     document.getElementById("nav-verify").addEventListener("click", () => {
       verifySection.classList.remove("hidden");
       signSection.classList.add("hidden");
+      visualSection.classList.add("hidden");
+    });
+
+    document.getElementById("nav-visual").addEventListener("click", () => {
+      visualSection.classList.remove("hidden");
+      signSection.classList.add("hidden");
+      verifySection.classList.add("hidden");
+    });
+
+    // 🎬 Visualization Steps Animation
+    document.getElementById("startVisualizationBtn").addEventListener("click", async () => {
+      const steps = [
+        "1️⃣ <b>Generate Keys</b>: The system creates a Public and Private RSA key pair.",
+        "2️⃣ <b>Hash File</b>: The file content is converted into a unique SHA-256 hash.",
+        "3️⃣ <b>Sign Hash</b>: The hash is encrypted using the Private Key to create a signature.",
+        "4️⃣ <b>Embed Metadata</b>: The signature, hash, timestamp, and public key are added to the file.",
+        "5️⃣ <b>Verify File</b>: The hash is recalculated and compared with the decrypted signature.",
+        "✅ <b>Result</b>: If both match, the file is authentic. Otherwise, it has been tampered with."
+      ];
+
+      const box = document.getElementById("visualSteps");
+      box.innerHTML = "";
+      for (let step of steps) {
+        const p = document.createElement("p");
+        p.innerHTML = step;
+        box.appendChild(p);
+        await new Promise(r => setTimeout(r, 1000));
+      }
     });
   </script>
 </body>
