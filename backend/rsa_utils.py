@@ -56,16 +56,24 @@ def generate_keys():
 
 
 # --------------------------------------------
-# 🔢 Hashing Function
+# 🔢 Hashing Function (Fixed for Render/Vercel)
 # --------------------------------------------
 
 def hash_file(filepath):
     """
     Hash file contents using SHA-256.
-    Returns both hex digest (for display) and integer (for math).
+    Auto-normalizes text line endings and hidden bytes
+    to avoid mismatches on Render/Vercel uploads.
     """
     with open(filepath, "rb") as f:
         data = f.read()
+
+    # Normalize newlines across OS/browser uploads
+    data = data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+    # Remove invisible trailing spaces or nulls
+    data = data.strip()
+
     h = hashlib.sha256(data).hexdigest()
     return h, int(h, 16)
 
