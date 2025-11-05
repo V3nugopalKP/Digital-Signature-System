@@ -3,35 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digital Signature System</title>
+  <title>🔐 Digital Signature System</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
     <h1>🔐 Digital Signature System</h1>
+    <p class="subtitle">
+      Demonstrating RSA-based Digital Signatures with Hashing (SHA-256), Timestamp & Signer Info
+    </p>
 
+    <!-- Generate Keys Section -->
     <div class="section">
-      <h2>Generate Keys</h2>
+      <h2>1️⃣ Generate RSA Keys</h2>
+      <p>Click below to generate public and private keys used for signing and verification.</p>
       <button id="generateKeysBtn">Generate Keys</button>
-      <p id="keysOutput"></p>
+      <pre id="keysOutput" class="output"></pre>
     </div>
 
+    <!-- Sign File Section -->
     <div class="section">
-      <h2>Sign a File</h2>
-      <input type="file" id="signFileInput" />
+      <h2>2️⃣ Sign a File</h2>
+      <p>Enter your name and upload a file to generate a digital signature embedded inside the file.</p>
+      <label for="usernameInput"><b>Signer Name:</b></label><br>
+      <input type="text" id="usernameInput" placeholder="Your name" class="input-field" /><br><br>
+
+      <label for="signFileInput"><b>Select File to Sign:</b></label><br>
+      <input type="file" id="signFileInput" /><br><br>
+
       <button id="signBtn">Sign File</button>
-      <p id="signOutput"></p>
+      <div id="signOutput" class="output"></div>
     </div>
 
+    <!-- Verify File Section -->
     <div class="section">
-      <h2>Verify a File</h2>
-      <label>Select Original File:</label>
-      <input type="file" id="verifyFileInput" />
-      <label>Select Signature File:</label>
-      <input type="file" id="verifySigInput" />
+      <h2>3️⃣ Verify a Signed File</h2>
+      <p>Upload the signed file (which contains the embedded signature metadata) to check authenticity.</p>
+
+      <label for="verifyFileInput"><b>Select Signed File:</b></label><br>
+      <input type="file" id="verifyFileInput" /><br><br>
+
       <button id="verifyBtn">Verify File</button>
-      <p id="verifyOutput"></p>
+      <div id="verifyOutput" class="output"></div>
     </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>Created by <b>Your Name</b> | Maths Project on Cryptography & Digital Signatures</p>
+      <small>RSA • Modular Arithmetic • SHA-256 • Flask • Vercel</small>
+    </footer>
   </div>
 
   <script src="script.js"></script>

@@ -1,21 +1,23 @@
-const BACKEND_URL = "https://digital-signature-backend-zrld.onrender.com"; // deployed backend
+const BACKEND_URL = "https://digital-signature-backend-zrld.onrender.com"; // your deployed backend
 
-// Generate Keys
+// ========== Generate Keys ==========
 document.getElementById("generateKeysBtn").addEventListener("click", async () => {
     try {
         const res = await fetch(`${BACKEND_URL}/generate_keys`);
         const data = await res.json();
         document.getElementById("keysOutput").innerText =
-            `Keys generated!\nPublic Key: ${JSON.stringify(data.public_key)}\nPrivate Key: ${JSON.stringify(data.private_key)}`;
+            `✅ Keys generated successfully!\n\nPublic Key: ${JSON.stringify(data.public_key)}\nPrivate Key: ${JSON.stringify(data.private_key)}`;
     } catch (err) {
         console.error(err);
-        alert("Failed to generate keys. Is backend running?");
+        alert("Failed to generate keys. Please check if backend is active.");
     }
 });
 
-// Sign File
+
+// ========== Sign File (with username + timestamp) ==========
 document.getElementById("signBtn").addEventListener("click", async () => {
     const fileInput = document.getElementById("signFileInput");
+    const username = document.getElementById("usernameInput")?.value?.trim() || "Anonymous";
     const file = fileInput.files[0];
 
     if (!file) {
@@ -25,6 +27,7 @@ document.getElementById("signBtn").addEventListener("click", async () => {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("user", username);
 
     try {
         const res = await fetch(`${BACKEND_URL}/sign_file`, {
@@ -33,32 +36,37 @@ document.getElementById("signBtn").addEventListener("click", async () => {
         });
         const data = await res.json();
 
-        // Show signature and download link
-        document.getElementById("signOutput").innerHTML =
-            `File signed successfully!<br>Signature: ${data.signature}<br>` +
-            `<a href="${BACKEND_URL}${data.download_url}" download>Download Signature</a>`;
+        if (data.message) {
+            document.getElementById("signOutput").innerHTML = `
+                ✅ <b>File Signed Successfully!</b><br><br>
+                <b>Signer:</b> ${data.user}<br>
+                <b>Timestamp:</b> ${data.timestamp}<br>
+                <b>File Hash (SHA-256):</b> ${data.file_hash}<br>
+                <b>Signature:</b> ${data.signature}<br><br>
+                <i>The signed file now contains embedded signature metadata.</i>
+            `;
+        } else {
+            document.getElementById("signOutput").innerText = "❌ Signing failed.";
+        }
     } catch (err) {
         console.error(err);
-        alert("Failed to sign file. Is backend running?");
+        alert("Error signing file. Check backend connection.");
     }
 });
 
-// Verify File
+
+// ========== Verify File ==========
 document.getElementById("verifyBtn").addEventListener("click", async () => {
     const fileInput = document.getElementById("verifyFileInput");
-    const sigInput = document.getElementById("verifySigInput");
-
     const file = fileInput.files[0];
-    const sig = sigInput.files[0];
 
-    if (!file || !sig) {
-        alert("Please select both the original file and the signature!");
+    if (!file) {
+        alert("Please upload the signed file to verify!");
         return;
     }
 
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("signature", sig);
 
     try {
         const res = await fetch(`${BACKEND_URL}/verify_file`, {
@@ -66,10 +74,23 @@ document.getElementById("verifyBtn").addEventListener("click", async () => {
             body: formData
         });
         const data = await res.json();
-        document.getElementById("verifyOutput").innerText =
-            `Verification result: ${data.verified ? "Authentic ✅" : "Tampered ❌"}`;
+
+        if (data.verified) {
+            document.getElementById("verifyOutput").innerHTML = `
+                ✅ <b>Signature Verified Successfully!</b><br><br>
+                <b>Signer:</b> ${data.user}<br>
+                <b>Timestamp:</b> ${data.timestamp}<br>
+                <b>File Hash:</b> ${data.file_hash}<br>
+                <b>Status:</b> Authentic ✅<br>
+            `;
+        } else {
+            document.getElementById("verifyOutput").innerHTML = `
+                ❌ <b>Signature Verification Failed!</b><br>
+                Reason: ${data.message || "File may be tampered or unsigned."}
+            `;
+        }
     } catch (err) {
         console.error(err);
-        alert("Failed to verify file. Is backend running?");
+        alert("Verification failed. Please ensure backend is active.");
     }
 });
