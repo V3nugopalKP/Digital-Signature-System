@@ -75,7 +75,6 @@ def sign_file_route():
     print(f"✅ Signed file saved at: {signed_path}")
 
     # ✅ Create absolute download link (works both locally and on Render)
-    # Detect environment (local or Render)
     if "render" in request.host or "onrender.com" in request.host:
         base_url = f"https://{request.host}"
     else:
@@ -100,7 +99,7 @@ def download_signed(filename):
     return send_from_directory(SIGNED_FOLDER, filename, as_attachment=True)
 
 
-# ===== Verify File =====
+# ===== Verify File (Binary Safe) =====
 @app.route("/verify_file", methods=["POST"])
 def verify_file_route():
     if "file" not in request.files:
@@ -110,14 +109,20 @@ def verify_file_route():
     upload_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(upload_path)
 
-    # Read file as text to find signature metadata
-    with open(upload_path, "r", encoding="utf-8", errors="ignore") as f:
-        content = f.read()
+    # ✅ Read as binary to preserve exact bytes
+    with open(upload_path, "rb") as f:
+        file_bytes = f.read()
 
-    if "---DIGITAL SIGNATURE DATA---" not in content:
+    try:
+        content_str = file_bytes.decode("utf-8", errors="ignore")
+    except Exception:
+        return jsonify({"verified": False, "message": "File decoding error."})
+
+    if "---DIGITAL SIGNATURE DATA---" not in content_str:
         return jsonify({"verified": False, "message": "❌ No embedded signature found."})
 
-    original_content, metadata_block = content.split("---DIGITAL SIGNATURE DATA---", 1)
+    # Extract original content & metadata
+    original_content_str, metadata_block = content_str.split("---DIGITAL SIGNATURE DATA---", 1)
     metadata_lines = metadata_block.splitlines()
 
     # Parse metadata
@@ -136,10 +141,14 @@ def verify_file_route():
     except Exception as e:
         return jsonify({"verified": False, "message": f"Metadata error: {str(e)}"})
 
-    # Verify authenticity
+    # ✅ Recreate only the original bytes before metadata
+    metadata_index = file_bytes.find(b"---DIGITAL SIGNATURE DATA---")
+    original_bytes = file_bytes[:metadata_index]
+
+    # Save temporary file for verification
     temp_path = os.path.join(UPLOAD_FOLDER, f"temp_{file.filename}")
-    with open(temp_path, "w", encoding="utf-8") as f:
-        f.write(original_content)
+    with open(temp_path, "wb") as f:
+        f.write(original_bytes)
 
     valid = verify_file(temp_path, signature, public_key)
     os.remove(temp_path)
