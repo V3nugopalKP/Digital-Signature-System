@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os, json, datetime
-from rsa_utils import generate_keys, sign_file, verify_file
+from rsa_utils import generate_keys, sign_file, verify_file, hash_file
 from zoneinfo import ZoneInfo  # For IST timezone (Python 3.9+)
 
 app = Flask(__name__)
@@ -23,10 +23,28 @@ def home():
 # ===== Generate RSA Keys =====
 @app.route("/generate_keys", methods=["GET"])
 def generate_keys_route():
+    keys_path = os.path.join(BASE_DIR, "keys.json")
+
+    # ✅ If keys already exist, just return them
+    if os.path.exists(keys_path):
+        with open(keys_path, "r") as f:
+            keys = json.load(f)
+        return jsonify({
+            "message": "✅ Existing keys loaded",
+            "public_key": keys["public_key"],
+            "private_key": keys["private_key"]
+        })
+
+    # Otherwise, generate new ones
     public_key, private_key = generate_keys()
-    with open(os.path.join(BASE_DIR, "keys.json"), "w") as f:
+    with open(keys_path, "w") as f:
         json.dump({"public_key": public_key, "private_key": private_key}, f)
-    return jsonify({"public_key": public_key, "private_key": private_key})
+
+    return jsonify({
+        "message": "🆕 New keys generated",
+        "public_key": public_key,
+        "private_key": private_key
+    })
 
 
 # ===== Sign File =====
@@ -99,7 +117,7 @@ def download_signed(filename):
     return send_from_directory(SIGNED_FOLDER, filename, as_attachment=True)
 
 
-# ===== Verify File (Robust, Binary Safe) =====
+# ===== Verify File (Debug + Binary Safe) =====
 @app.route("/verify_file", methods=["POST"])
 def verify_file_route():
     if "file" not in request.files:
@@ -146,7 +164,6 @@ def verify_file_route():
     metadata_index = file_bytes.find(marker)
 
     if metadata_index == -1:
-        # fallback for Windows-style line endings
         marker = b"\r\n---DIGITAL SIGNATURE DATA---"
         metadata_index = file_bytes.find(marker)
 
@@ -164,8 +181,23 @@ def verify_file_route():
     with open(temp_path, "wb") as f:
         f.write(original_bytes)
 
-    # Perform RSA signature verification
-    valid = verify_file(temp_path, signature, public_key)
+    # Perform RSA verification with detailed debug info
+    e, n = public_key
+    hash_hex, hash_val = hash_file(temp_path)
+    decrypted = pow(signature, e, n)
+    valid = decrypted == hash_val % n
+
+    # 🧠 Debug log for backend console
+    print("\n=== VERIFICATION DEBUG ===")
+    print(f"User: {user}")
+    print(f"Embedded Hash (from file): {file_hash}")
+    print(f"Recomputed Hash: {hash_hex}")
+    print(f"Hash mod n: {hash_val % n}")
+    print(f"Decrypted Signature: {decrypted}")
+    print(f"Public Key: {public_key}")
+    print(f"Match: {valid}")
+    print("==========================\n")
+
     os.remove(temp_path)
 
     return jsonify({
