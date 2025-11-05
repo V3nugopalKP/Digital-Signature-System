@@ -164,9 +164,9 @@ button:hover {
   }
 }
 
-/* === Animated Arrows (for Visualization Flow) === */
+/* === Animated Arrows (Visualization Flow) === */
 .visual-box::before {
-  content: "🔑 ➡️ 🧮 ➡️ ✍️ ➡️ 🧾 ➡️ ✅";
+  content: "🔑 ➡️ 🧮 ➡️ ✍️ ➡️ 📎 ➡️ 🧾 ➡️ ✅";
   position: absolute;
   top: 10px;
   left: 0;
@@ -198,4 +198,103 @@ footer {
 
 footer b {
   color: #00ffcc;
+}
+
+
+/* === Responsive Design === */
+
+/* For tablets (width ≤ 1024px) */
+@media (max-width: 1024px) {
+  .app-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    justify-content: space-around;
+    border-right: none;
+    border-bottom: 2px solid #333;
+    padding: 10px;
+  }
+
+  .sidebar h2 {
+    display: none; /* Hide title to save space */
+  }
+
+  .nav-btn {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  .main-content {
+    margin-left: 0;
+    padding: 20px;
+    width: 100%;
+  }
+}
+
+/* For mobile (width ≤ 600px) */
+@media (max-width: 600px) {
+  body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 5px;
+    position: relative;
+  }
+
+  .nav-btn {
+    width: 45%;
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  .main-content {
+    padding: 15px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
+
+  .subtitle {
+    font-size: 13px;
+  }
+
+  .section {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+
+  .input-field {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+  }
+
+  .output {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  footer {
+    font-size: 12px;
+  }
+
+  .visual-box {
+    font-size: 13px;
+    overflow-x: auto;
+  }
 }
