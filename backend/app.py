@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os, json, datetime
 from rsa_utils import generate_keys, sign_file, verify_file
-from zoneinfo import ZoneInfo  # for IST timezone (Python 3.9+)
+from zoneinfo import ZoneInfo  # For IST timezone (Python 3.9+)
 
 app = Flask(__name__)
 CORS(app)
@@ -74,7 +74,7 @@ def sign_file_route():
 
     print(f"✅ Signed file saved at: {signed_path}")
 
-    # ✅ Create absolute download link (works both locally and on Render)
+    # ✅ Create absolute download link (works for both local and Render)
     if "render" in request.host or "onrender.com" in request.host:
         base_url = f"https://{request.host}"
     else:
@@ -99,7 +99,7 @@ def download_signed(filename):
     return send_from_directory(SIGNED_FOLDER, filename, as_attachment=True)
 
 
-# ===== Verify File (Binary Safe) =====
+# ===== Verify File (Robust, Binary Safe) =====
 @app.route("/verify_file", methods=["POST"])
 def verify_file_route():
     if "file" not in request.files:
@@ -109,7 +109,7 @@ def verify_file_route():
     upload_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(upload_path)
 
-    # ✅ Read as binary to preserve exact bytes
+    # ✅ Read file as bytes to preserve exact data
     with open(upload_path, "rb") as f:
         file_bytes = f.read()
 
@@ -125,7 +125,7 @@ def verify_file_route():
     original_content_str, metadata_block = content_str.split("---DIGITAL SIGNATURE DATA---", 1)
     metadata_lines = metadata_block.splitlines()
 
-    # Parse metadata
+    # Parse metadata block
     meta = {}
     for line in metadata_lines:
         if ":" in line:
@@ -141,15 +141,30 @@ def verify_file_route():
     except Exception as e:
         return jsonify({"verified": False, "message": f"Metadata error: {str(e)}"})
 
-    # ✅ Recreate only the original bytes before metadata
-    metadata_index = file_bytes.find(b"---DIGITAL SIGNATURE DATA---")
+    # ✅ Robust marker search (handles both \n and \r\n endings)
+    marker = b"\n---DIGITAL SIGNATURE DATA---"
+    metadata_index = file_bytes.find(marker)
+
+    if metadata_index == -1:
+        # fallback for Windows-style line endings
+        marker = b"\r\n---DIGITAL SIGNATURE DATA---"
+        metadata_index = file_bytes.find(marker)
+
+    if metadata_index == -1:
+        return jsonify({
+            "verified": False,
+            "message": "❌ Embedded signature marker not found correctly."
+        })
+
+    # Extract only original bytes (before signature metadata)
     original_bytes = file_bytes[:metadata_index]
 
-    # Save temporary file for verification
+    # Write temporary file for verification
     temp_path = os.path.join(UPLOAD_FOLDER, f"temp_{file.filename}")
     with open(temp_path, "wb") as f:
         f.write(original_bytes)
 
+    # Perform RSA signature verification
     valid = verify_file(temp_path, signature, public_key)
     os.remove(temp_path)
 
