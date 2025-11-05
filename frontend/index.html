@@ -7,53 +7,80 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>🔐 Digital Signature System</h1>
-    <p class="subtitle">
-      Demonstrating RSA-based Digital Signatures with Hashing (SHA-256), Timestamp & Signer Info
-    </p>
+  <div class="app-container">
+    <!-- ===== Sidebar Navigation ===== -->
+    <aside class="sidebar">
+      <h2>🔐 Menu</h2>
+      <button class="nav-btn" id="nav-sign">✍️ Sign File</button>
+      <button class="nav-btn" id="nav-verify">🧾 Verify File</button>
+    </aside>
 
-    <!-- Generate Keys Section -->
-    <div class="section">
-      <h2>1️⃣ Generate RSA Keys</h2>
-      <p>Click below to generate public and private keys used for signing and verification.</p>
-      <button id="generateKeysBtn">Generate Keys</button>
-      <pre id="keysOutput" class="output"></pre>
-    </div>
+    <!-- ===== Main Content ===== -->
+    <main class="main-content">
+      <h1 class="title">Digital Signature System</h1>
+      <p class="subtitle">
+        Demonstrating RSA-based Digital Signatures with Hashing (SHA-256), Timestamp & Signer Info
+      </p>
 
-    <!-- Sign File Section -->
-    <div class="section">
-      <h2>2️⃣ Sign a File</h2>
-      <p>Enter your name and upload a file to generate a digital signature embedded inside the file.</p>
-      <label for="usernameInput"><b>Signer Name:</b></label><br>
-      <input type="text" id="usernameInput" placeholder="Your name" class="input-field" /><br><br>
+      <!-- Generate Keys Section -->
+      <div class="section" id="key-section">
+        <h2>1️⃣ Generate RSA Keys</h2>
+        <p>Click below to generate public and private keys used for signing and verification.</p>
+        <button id="generateKeysBtn">Generate Keys</button>
+        <pre id="keysOutput" class="output"></pre>
+      </div>
 
-      <label for="signFileInput"><b>Select File to Sign:</b></label><br>
-      <input type="file" id="signFileInput" /><br><br>
+      <!-- Sign File Section -->
+      <div class="section" id="sign-section">
+        <h2>2️⃣ Sign a File</h2>
+        <p>Enter your name and upload a file to generate a digital signature embedded inside the file.</p>
 
-      <button id="signBtn">Sign File</button>
-      <div id="signOutput" class="output"></div>
-    </div>
+        <label for="usernameInput"><b>Signer Name:</b></label><br>
+        <input type="text" id="usernameInput" placeholder="Your name" class="input-field" /><br><br>
 
-    <!-- Verify File Section -->
-    <div class="section">
-      <h2>3️⃣ Verify a Signed File</h2>
-      <p>Upload the signed file (which contains the embedded signature metadata) to check authenticity.</p>
+        <label for="signFileInput"><b>Select File to Sign:</b></label><br>
+        <input type="file" id="signFileInput" /><br><br>
 
-      <label for="verifyFileInput"><b>Select Signed File:</b></label><br>
-      <input type="file" id="verifyFileInput" /><br><br>
+        <button id="signBtn">Sign File</button>
+        <div id="signOutput" class="output"></div>
+      </div>
 
-      <button id="verifyBtn">Verify File</button>
-      <div id="verifyOutput" class="output"></div>
-    </div>
+      <!-- Verify File Section -->
+      <div class="section hidden" id="verify-section">
+        <h2>3️⃣ Verify a Signed File</h2>
+        <p>Upload the signed file (which contains the embedded signature metadata) to check authenticity.</p>
 
-    <!-- Footer -->
-    <footer>
-      <p>Created by <b>Your Name</b> | Maths Project on Cryptography & Digital Signatures</p>
-      <small>RSA • Modular Arithmetic • SHA-256 • Flask • Vercel</small>
-    </footer>
+        <label for="verifyFileInput"><b>Select Signed File:</b></label><br>
+        <input type="file" id="verifyFileInput" /><br><br>
+
+        <button id="verifyBtn">Verify File</button>
+        <div id="verifyOutput" class="output"></div>
+      </div>
+
+      <!-- Footer -->
+      <footer>
+        <p>Created by <b>Your Name</b> | Maths Project on Cryptography & Digital Signatures</p>
+        <small>RSA • Modular Arithmetic • SHA-256 • Flask • Vercel</small>
+      </footer>
+    </main>
   </div>
 
   <script src="script.js"></script>
+
+  <script>
+    // ===== Section Toggle Logic =====
+    const signSection = document.getElementById("sign-section");
+    const verifySection = document.getElementById("verify-section");
+
+    document.getElementById("nav-sign").addEventListener("click", () => {
+      signSection.classList.remove("hidden");
+      verifySection.classList.add("hidden");
+    });
+
+    document.getElementById("nav-verify").addEventListener("click", () => {
+      verifySection.classList.remove("hidden");
+      signSection.classList.add("hidden");
+    });
+  </script>
 </body>
 </html>

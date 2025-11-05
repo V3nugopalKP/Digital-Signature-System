@@ -74,8 +74,14 @@ def sign_file_route():
 
     print(f"✅ Signed file saved at: {signed_path}")
 
-    # Create download link
-    download_url = f"/download_signed/{file.filename}"
+    # ✅ Create absolute download link (works both locally and on Render)
+    # Detect environment (local or Render)
+    if "render" in request.host or "onrender.com" in request.host:
+        base_url = f"https://{request.host}"
+    else:
+        base_url = f"http://{request.host}"
+
+    download_url = f"{base_url}/download_signed/{file.filename}"
 
     return jsonify({
         "message": "File signed successfully!",
